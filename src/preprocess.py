@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+from tqdm import tqdm
 
 def clear(path):
     subprocess.run(["rm", "-rf", path])
@@ -19,7 +20,7 @@ def main():
         path_to_dataset = os.path.join(path_to_datasets, dataset_dir)
         if(os.path.isdir(path_to_dataset)):
             path_to_tasks = os.path.join(path_to_dataset, "Tasks/")
-            for task in os.listdir(path_to_tasks):
+            for task in tqdm(os.listdir(path_to_tasks)):
                 if(task.endswith(".txt")):
 
                     # Create tmp folder
@@ -28,11 +29,12 @@ def main():
 
                     # Create buggy file
                     with open(os.path.join(path_to_tasks, task), 'r') as in_file:
-                        data_in = in_file.read().splitlines(True)
+                        head1, head2, data_in = in_file.read().split('\n', 2)
                     buggy_file_base_name = os.path.join(path_to_tmp, task.rstrip('.txt'))
                     buggy_file_path = buggy_file_base_name + ".java"
                     with open(buggy_file_path, 'w') as out_file:
-                        out_file.writelines(data_in[2:])                   
+                        out_file.writelines(data_in)  
+                                     
 
                     # Get buggy line number
                     path_to_sol = os.path.join(path_to_dataset, "Solutions/")
