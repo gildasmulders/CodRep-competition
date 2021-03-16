@@ -14,17 +14,23 @@ def handle_retval(path_to_tmp, retval, call_location):
 
 def main():
     path_to_preprocess = os.path.abspath(os.path.dirname(__file__))
+    path_to_tmp = os.path.join(path_to_preprocess, "tmp/")
+    if os.path.exists(path_to_tmp):
+        clear(path_to_tmp)
     path_to_datasets = os.path.join(path_to_preprocess, "../Datasets/")
     path_to_outputs = os.path.join(path_to_preprocess, "../Truncated_Abstract_buggy_contexts/")    
     for dataset_dir in os.listdir(path_to_datasets):
         path_to_dataset = os.path.join(path_to_datasets, dataset_dir)
         if(os.path.isdir(path_to_dataset)):
             path_to_tasks = os.path.join(path_to_dataset, "Tasks/")
+            path_to_output = os.path.join(path_to_outputs, dataset_dir, "abstractions.txt")
+            final_abstraction_file = open(path_to_output, 'a')
+            path_to_indexes = os.path.join(path_to_outputs, dataset_dir, "indexes.txt")
+            final_indexes_file = open(path_to_indexes, 'a')
             for task in tqdm(os.listdir(path_to_tasks)):
                 if(task.endswith(".txt")):
 
-                    # Create tmp folder
-                    path_to_tmp = os.path.join(path_to_preprocess, "tmp/")
+                    # Create tmp folder                    
                     os.mkdir(path_to_tmp)
 
                     # Create buggy file
@@ -33,8 +39,7 @@ def main():
                     buggy_file_base_name = os.path.join(path_to_tmp, task.rstrip('.txt'))
                     buggy_file_path = buggy_file_base_name + ".java"
                     with open(buggy_file_path, 'w') as out_file:
-                        out_file.writelines(data_in)  
-                                     
+                        out_file.writelines(data_in)                                       
 
                     # Get buggy line number
                     path_to_sol = os.path.join(path_to_dataset, "Solutions/")
@@ -62,10 +67,11 @@ def main():
                     t_t_a_b_c = open(buggy_file_base_name+"_abstract_tokenized_truncated.txt", 'r').readlines()[0]
 
                     # Writing to final location
-                    path_to_output = os.path.join(path_to_outputs, dataset_dir, "abstractions.txt")
-                    with open(path_to_output, 'a') as f:
-                        f.write(t_t_a_b_c)
+                    final_abstraction_file.write(t_t_a_b_c)
+                    final_indexes_file.write(task.strip('.txt'))
                     clear(path_to_tmp)
+            final_abstraction_file.close()
+            final_indexes_file.close()
     sys.exit()
 
 
