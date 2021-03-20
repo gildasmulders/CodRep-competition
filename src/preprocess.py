@@ -19,6 +19,9 @@ def main():
         clear(path_to_tmp)
     path_to_datasets = os.path.join(path_to_preprocess, "../Datasets/")
     path_to_outputs = os.path.join(path_to_preprocess, "../Truncated_Abstract_buggy_contexts/")    
+    abcreation_err = open(os.path.join(path_to_preprocess, "abccreation.out"), 'w')
+    tokenization_err = open(os.path.join(path_to_preprocess, "tokenization.out"), 'w')
+    truncation_err = open(os.path.join(path_to_preprocess, "truncation.out"), 'w')
     for dataset_dir in os.listdir(path_to_datasets):
         path_to_dataset = os.path.join(path_to_datasets, dataset_dir)
         if(os.path.isdir(path_to_dataset)):
@@ -47,20 +50,20 @@ def main():
                     buggy_line_number = int(open(path_to_sol, 'r').readlines()[0].strip())
 
                     # Create Buggy Context Abstraction
-                    retval = subprocess.run(["java", "-jar", os.path.join(path_to_preprocess, "abstraction-1.0-SNAPSHOT-jar-with-dependencies.jar"), buggy_file_path, str(buggy_line_number), path_to_tmp], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    retval = subprocess.run(["java", "-jar", os.path.join(path_to_preprocess, "abstraction-1.0-SNAPSHOT-jar-with-dependencies.jar"), buggy_file_path, str(buggy_line_number), path_to_tmp], stdout=subprocess.DEVNULL, stderr=abcreation_err)
                     if retval.returncode != 0:
                         clear(path_to_tmp)
                         continue 
 
                     # Tokenizing                     
-                    retval = subprocess.run(["python3", os.path.join(path_to_preprocess, "tokenize.py"), buggy_file_base_name+"_abstract.java", buggy_file_base_name+"_abstract_tokenized.txt"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    retval = subprocess.run(["python3", os.path.join(path_to_preprocess, "tokenize.py"), buggy_file_base_name+"_abstract.java", buggy_file_base_name+"_abstract_tokenized.txt"], stdout=subprocess.DEVNULL, stderr=tokenization_err)
                     #handle_retval(path_to_tmp, retval.returncode, "Tokenization")
                     if retval.returncode != 0:
                         clear(path_to_tmp)
                         continue 
 
                     # Truncating
-                    retval = subprocess.run(["perl", os.path.join(path_to_preprocess, "trimCon.pl"), buggy_file_base_name+"_abstract_tokenized.txt", buggy_file_base_name+"_abstract_tokenized_truncated.txt", "1000"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    retval = subprocess.run(["perl", os.path.join(path_to_preprocess, "trimCon.pl"), buggy_file_base_name+"_abstract_tokenized.txt", buggy_file_base_name+"_abstract_tokenized_truncated.txt", "1000"], stdout=subprocess.DEVNULL, stderr=truncation_err)
                     handle_retval(path_to_tmp, retval.returncode, "Truncation")
 
                     # Get truncated tokenized abstract buggy context
@@ -68,7 +71,7 @@ def main():
 
                     # Writing to final location
                     final_abstraction_file.write(t_t_a_b_c)
-                    final_indexes_file.write(task.strip('.txt'))
+                    final_indexes_file.write(task.strip('.txt')+"\n")
                     clear(path_to_tmp)
             final_abstraction_file.close()
             final_indexes_file.close()
