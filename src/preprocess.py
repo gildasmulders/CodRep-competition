@@ -18,7 +18,7 @@ def main():
     if os.path.exists(path_to_tmp):
         clear(path_to_tmp)
     path_to_datasets = os.path.join(path_to_preprocess, "../Datasets/")
-    path_to_outputs = os.path.join(path_to_preprocess, "../Truncated_Abstract_buggy_contexts/")    
+    path_to_outputs = os.path.join(path_to_preprocess, "../New_datasets/")    
     abcreation_err = open(os.path.join(path_to_preprocess, "abccreation.out"), 'w')
     tokenization_err = open(os.path.join(path_to_preprocess, "tokenization.out"), 'w')
     truncation_err = open(os.path.join(path_to_preprocess, "truncation.out"), 'w')
@@ -62,8 +62,27 @@ def main():
                         clear(path_to_tmp)
                         continue 
 
+                    # Replacing spaces with <seq2seq4repair_space> inside strings
+                    code = ""
+                    with open(buggy_file_base_name+"_abstract_tokenized.txt", 'r') as tokenized_file:
+                        code = tokenized_file.readlines()[0]
+                    newcode = ""
+                    insquote = False
+                    indquote = False
+                    for word in code:
+                        if word == '"' and not insquote:
+                            indquote = not indquote
+                        if word == "'" and not indquote:
+                            insquote = not insquote
+                        if word == " " and (insquote or indquote):
+                            newcode += "<seq2seq4repair_space>"
+                        else:
+                            newcode += word
+                    with open(buggy_file_base_name+"_abstract_tokenized_stringed.txt", 'w') as stringed_file:
+                        stringed_file.write(newcode)                    
+                    
                     # Truncating
-                    retval = subprocess.run(["perl", os.path.join(path_to_preprocess, "trimCon.pl"), buggy_file_base_name+"_abstract_tokenized.txt", buggy_file_base_name+"_abstract_tokenized_truncated.txt", "1000"], stdout=subprocess.DEVNULL, stderr=truncation_err)
+                    retval = subprocess.run(["perl", os.path.join(path_to_preprocess, "trimCon.pl"), buggy_file_base_name+"_abstract_tokenized_stringed.txt", buggy_file_base_name+"_abstract_tokenized_truncated.txt", "1000"], stdout=subprocess.DEVNULL, stderr=truncation_err)
                     handle_retval(path_to_tmp, retval.returncode, "Truncation")
 
                     # Get truncated tokenized abstract buggy context
