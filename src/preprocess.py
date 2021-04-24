@@ -144,12 +144,49 @@ def rebuild_list():
         out.close()
     sys.exit()    
 
+def trunc_list():
+    path_to_preprocess = os.path.abspath(os.path.dirname(__file__))
+    path_to_inputs = os.path.join(path_to_preprocess, "../train-val-test_touse/")
+    path_to_outputs = os.path.join(path_to_preprocess, "../train-val-test_touse/truncated/")
+    path_to_tmp = os.path.join(path_to_preprocess, "tmp/")
+    if os.path.exists(path_to_tmp):
+        clear(path_to_tmp)
+    files = ["train", "val", "test"]
+    for file in files:
+        file_name = "src-" + file + ".txt"
+        lines = []
+        with open(os.path.join(path_to_inputs, file_name), 'r') as file_in:
+            lines = file_in.readlines()
+        os.mkdir(path_to_tmp)
+        out_file_name = os.path.join(path_to_outputs, file_name)
+        out_file = open(out_file_name, 'a')
+        for line in tqdm(lines):
+            untrunc_file = os.path.join(path_to_tmp, "tmp.txt")
+            trunc_file = os.path.join(path_to_tmp, "tmp_trunc.txt")
+            if os.path.exists(untrunc_file):
+                clear(untrunc_file)
+            if os.path.exists(trunc_file):
+                clear(trunc_file)
+            with open(untrunc_file, 'w') as file_out_1:
+                file_out_1.write(line)
+            retval = subprocess.run(["perl", os.path.join(path_to_preprocess, "trimCon.pl"), untrunc_file, trunc_file, "1000"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            handle_retval(path_to_tmp, retval.returncode, "Truncation")
+            with open(trunc_file) as file_in_final:
+                toRead = file_in_final.readlines()[0]
+                out_file.write(toRead)
+        out_file.close()
+        clear(path_to_tmp)
+            
+
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", default=False, action="store_true")
+    parser.add_argument("-t", default=False, action="store_true")
     args = parser.parse_args()
     if args.r:
         rebuild_list()
+    elif args.t:
+        trunc_list()
     else:
         main()
